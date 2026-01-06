@@ -1,0 +1,96 @@
+name: Build Android APK
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🏗 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🏗 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: 🏗 Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: 📦 Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: 🚀 Build APK
+        working-directory: frontend
+        run: eas build --platform android --profile preview --non-interactive --no-wait
+
+      - name: ⬇️ Download APK
+        working-directory: frontend
+        run: |
+          sleep 60
+          eas build:list --platform android --limit 1 --json > build-info.json
+          BUILD_ID=$(cat build-info.json | jq -r '.[0].id')
+          echo "Build ID: $BUILD_ID"
+
+          # Wait for build to complete
+          while true; do
+            STATUS=$(eas build:view $BUILD_ID --json | jq -r '.status')
+            echo "Build status: $STATUS"
+
+            if [ "$STATUS" = "finished" ]; then
+              echo "Build completed successfully!"
+              ARTIFACT_URL=$(eas build:view $BUILD_ID --json | jq -r '.artifacts.buildUrl')
+              echo "Downloading APK from: $ARTIFACT_URL"
+              curl -L -o medilog.apk "$ARTIFACT_URL"
+              break
+            elif [ "$STATUS" = "errored" ] || [ "$STATUS" = "canceled" ]; then
+              echo "Build failed with status: $STATUS"
+              exit 1
+            fi
+
+            echo "Waiting for build to complete..."
+            sleep 30
+          done
+
+      - name: 📱 Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: medilog-apk
+          path: frontend/medilog.apk
+          retention-days: 30
+
+      - name: 📝 Create Release
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: Medilog v1.0.${{ github.run_number }}
+          body: |
+            🎉 Medilog Android APK Build
+
+            📱 **Demo Mode**: Uygulama mock data ile çalışıyor
+
+            ### Özellikler
+            - ✅ İlaç takibi
+            - ✅ Doz hatırlatıcıları
+            - ✅ İlerleyiş istatistikleri
+            - ✅ Farmakokinetik grafikler
+
+            ### Giriş
+            Email: herhangi (örn: demo@test.com)
+            Şifre: herhangi (örn: 123456)
+          files: frontend/medilog.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
