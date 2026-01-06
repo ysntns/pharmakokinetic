@@ -8,17 +8,12 @@ import {
   ActivityIndicator,
   RefreshControl,
   Platform,
-  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import { medicationAPI, doseAPI } from '../../services/api';
 import { useAppStore, DoseLog } from '../../store/appStore';
 import { format, isToday, parseISO } from 'date-fns';
 import { tr } from 'date-fns/locale';
-
-const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const [todaysDoses, setTodaysDoses] = useState<DoseLog[]>([]);
@@ -97,133 +92,123 @@ export default function HomeScreen() {
 
   if (loading) {
     return (
-      <LinearGradient colors={['#6366F1', '#8B5CF6', '#D946EF']} style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#FFFFFF" />
-      </LinearGradient>
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0EA5E9" />
+      </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={['#6366F1', '#8B5CF6', '#D946EF']} style={styles.gradient}>
-        <ScrollView
-          style={styles.scrollView}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FFFFFF" />
-          }
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Header */}
-          <View style={styles.header}>
-            <View>
-              <Text style={styles.greeting}>Merhaba! 👋</Text>
-              <Text style={styles.date}>{format(new Date(), 'EEEE, d MMMM', { locale: tr })}</Text>
-            </View>
-            <TouchableOpacity style={styles.notificationButton}>
-              <Ionicons name="notifications-outline" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#0EA5E9" />
+        }
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.appName}>Medilog</Text>
+            <Text style={styles.greeting}>Merhaba! 👋</Text>
+            <Text style={styles.date}>{format(new Date(), 'd MMMM EEEE', { locale: tr })}</Text>
           </View>
+        </View>
 
-          {/* Stats Cards - Glassmorphism */}
-          <View style={styles.statsContainer}>
-            <BlurView intensity={20} tint="light" style={styles.statCard}>
-              <View style={styles.statIconContainer}>
-                <Ionicons name="medical" size={28} color="#6366F1" />
-              </View>
-              <Text style={styles.statNumber}>{medications.length}</Text>
-              <Text style={styles.statLabel}>Aktif İlaç</Text>
-            </BlurView>
-
-            <BlurView intensity={20} tint="light" style={styles.statCard}>
-              <View style={styles.statIconContainer}>
-                <Ionicons name="checkmark-circle" size={28} color="#10B981" />
-              </View>
-              <Text style={styles.statNumber}>
-                {todaysDoses.filter((d) => d.status === 'taken').length}
-              </Text>
-              <Text style={styles.statLabel}>Alındı</Text>
-            </BlurView>
-
-            <BlurView intensity={20} tint="light" style={styles.statCard}>
-              <View style={styles.statIconContainer}>
-                <Ionicons name="time" size={28} color="#F59E0B" />
-              </View>
-              <Text style={styles.statNumber}>{upcomingDoses.length}</Text>
-              <Text style={styles.statLabel}>Bekliyor</Text>
-            </BlurView>
+        {/* Stats Cards */}
+        <View style={styles.statsRow}>
+          <View style={[styles.statCard, { backgroundColor: '#E0F2FE' }]}>
+            <Ionicons name="medical" size={24} color="#0EA5E9" />
+            <Text style={styles.statNumber}>{medications.length}</Text>
+            <Text style={styles.statLabel}>Aktif İlaç</Text>
           </View>
+          <View style={[styles.statCard, { backgroundColor: '#D1FAE5' }]}>
+            <Ionicons name="checkmark-circle" size={24} color="#10B981" />
+            <Text style={styles.statNumber}>
+              {todaysDoses.filter((d) => d.status === 'taken').length}
+            </Text>
+            <Text style={styles.statLabel}>Alındı</Text>
+          </View>
+          <View style={[styles.statCard, { backgroundColor: '#FEF3C7' }]}>
+            <Ionicons name="time" size={24} color="#F59E0B" />
+            <Text style={styles.statNumber}>{upcomingDoses.length}</Text>
+            <Text style={styles.statLabel}>Bekliyor</Text>
+          </View>
+        </View>
 
-          {/* Upcoming Doses Section */}
-          <View style={styles.section}>
+        {/* Upcoming Doses */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Sıradaki Dozlar</Text>
-            {upcomingDoses.length > 0 ? (
-              upcomingDoses.slice(0, 3).map((dose) => (
-                <BlurView key={dose.id} intensity={15} tint="light" style={styles.doseCard}>
-                  <View style={styles.doseLeft}>
-                    <View style={styles.doseTimeContainer}>
-                      <Text style={styles.doseTimeText}>
-                        {format(parseISO(dose.scheduled_time), 'HH:mm')}
-                      </Text>
-                    </View>
-                    <View style={styles.doseInfo}>
-                      <Text style={styles.doseDrug}>{dose.drug_name}</Text>
-                      <Text style={styles.doseDosage}>{dose.dosage}</Text>
-                    </View>
-                  </View>
-                  <TouchableOpacity
-                    style={styles.takeButton}
-                    onPress={() => handleMarkTaken(dose.id)}
-                  >
-                    <Ionicons name="checkmark" size={24} color="#FFFFFF" />
-                  </TouchableOpacity>
-                </BlurView>
-              ))
-            ) : (
-              <BlurView intensity={10} tint="light" style={styles.emptyCard}>
-                <Ionicons name="happy-outline" size={48} color="#6366F1" />
-                <Text style={styles.emptyText}>Harika! Hepsi tamam! 🎉</Text>
-              </BlurView>
+            {upcomingDoses.length > 0 && (
+              <Text style={styles.sectionBadge}>{upcomingDoses.length}</Text>
             )}
           </View>
-
-          {/* Today's History */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Bugünkü Geçmiş</Text>
-            {todaysDoses.length > 0 ? (
-              todaysDoses.map((dose) => (
-                <BlurView key={dose.id} intensity={10} tint="light" style={styles.historyCard}>
-                  <View style={styles.historyLeft}>
-                    <View style={[
-                      styles.statusIcon,
-                      { backgroundColor: getDoseStatusColor(dose.status) + '20' }
-                    ]}>
-                      <Ionicons
-                        name={getDoseStatusIcon(dose.status)}
-                        size={24}
-                        color={getDoseStatusColor(dose.status)}
-                      />
-                    </View>
-                    <View style={styles.historyInfo}>
-                      <Text style={styles.historyDrug}>{dose.drug_name}</Text>
-                      <Text style={styles.historyDosage}>{dose.dosage}</Text>
-                    </View>
+          
+          {upcomingDoses.length > 0 ? (
+            upcomingDoses.slice(0, 3).map((dose) => (
+              <View key={dose.id} style={styles.doseCard}>
+                <View style={styles.doseLeft}>
+                  <View style={styles.timeBox}>
+                    <Text style={styles.timeText}>
+                      {format(parseISO(dose.scheduled_time), 'HH:mm')}
+                    </Text>
                   </View>
-                  <Text style={styles.historyTime}>
-                    {format(parseISO(dose.scheduled_time), 'HH:mm')}
-                  </Text>
-                </BlurView>
-              ))
-            ) : (
-              <BlurView intensity={10} tint="light" style={styles.emptyCard}>
-                <Ionicons name="calendar-outline" size={48} color="#94A3B8" />
-                <Text style={styles.emptyText}>Bugün hiç doz yok</Text>
-              </BlurView>
-            )}
-          </View>
+                  <View style={styles.doseInfo}>
+                    <Text style={styles.doseDrug}>{dose.drug_name}</Text>
+                    <Text style={styles.doseDosage}>{dose.dosage}</Text>
+                  </View>
+                </View>
+                <TouchableOpacity
+                  style={styles.takeButton}
+                  onPress={() => handleMarkTaken(dose.id)}
+                >
+                  <Ionicons name="checkmark" size={20} color="#FFFFFF" />
+                </TouchableOpacity>
+              </View>
+            ))
+          ) : (
+            <View style={styles.emptyState}>
+              <Ionicons name="checkmark-done-circle-outline" size={48} color="#10B981" />
+              <Text style={styles.emptyTitle}>Hepsi tamam!</Text>
+              <Text style={styles.emptyText}>Bugün için tüm dozlarınız alındı</Text>
+            </View>
+          )}
+        </View>
 
-          <View style={{ height: 100 }} />
-        </ScrollView>
-      </LinearGradient>
+        {/* Today's History */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Bugünkü Geçmiş</Text>
+          {todaysDoses.length > 0 ? (
+            todaysDoses.map((dose) => (
+              <View key={dose.id} style={styles.historyCard}>
+                <View style={styles.historyLeft}>
+                  <View style={[
+                    styles.statusDot,
+                    { backgroundColor: getDoseStatusColor(dose.status) }
+                  ]} />
+                  <View style={styles.historyInfo}>
+                    <Text style={styles.historyDrug}>{dose.drug_name}</Text>
+                    <Text style={styles.historyDosage}>{dose.dosage}</Text>
+                  </View>
+                </View>
+                <Text style={styles.historyTime}>
+                  {format(parseISO(dose.scheduled_time), 'HH:mm')}
+                </Text>
+              </View>
+            ))
+          ) : (
+            <View style={styles.emptyState}>
+              <Ionicons name="calendar-outline" size={48} color="#94A3B8" />
+              <Text style={styles.emptyTitle}>Bugün hiç doz yok</Text>
+            </View>
+          )}
+        </View>
+
+        <View style={{ height: 100 }} />
+      </ScrollView>
     </View>
   );
 }
@@ -231,99 +216,104 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  gradient: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
+    backgroundColor: '#F8FAFC',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#F8FAFC',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+  scrollView: {
+    flex: 1,
+  },
+  content: {
     paddingBottom: 20,
   },
+  header: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingBottom: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+  },
+  appName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#0EA5E9',
+    marginBottom: 8,
+    letterSpacing: 0.5,
+  },
   greeting: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#0F172A',
     marginBottom: 4,
   },
   date: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: 15,
+    color: '#64748B',
+    textTransform: 'capitalize',
   },
-  notificationButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  statsContainer: {
+  statsRow: {
     flexDirection: 'row',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     gap: 12,
-    marginBottom: 24,
+    marginTop: 20,
   },
   statCard: {
     flex: 1,
     padding: 16,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 16,
     alignItems: 'center',
-    overflow: 'hidden',
-  },
-  statIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
   },
   statNumber: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#1F2937',
+    color: '#0F172A',
+    marginTop: 8,
     marginBottom: 4,
   },
   statLabel: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#64748B',
     fontWeight: '600',
   },
   section: {
+    marginTop: 24,
     paddingHorizontal: 20,
-    marginBottom: 24,
   },
-  sectionTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 16,
   },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#0F172A',
+  },
+  sectionBadge: {
+    backgroundColor: '#0EA5E9',
+    color: '#FFFFFF',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    fontSize: 14,
+    fontWeight: '700',
+  },
   doseCard: {
+    backgroundColor: '#FFFFFF',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 16,
     marginBottom: 12,
-    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   doseLeft: {
     flexDirection: 'row',
@@ -331,56 +321,48 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 12,
   },
-  doseTimeContainer: {
-    width: 70,
-    height: 70,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    justifyContent: 'center',
-    alignItems: 'center',
+  timeBox: {
+    backgroundColor: '#E0F2FE',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
   },
-  doseTimeText: {
-    fontSize: 20,
+  timeText: {
+    fontSize: 16,
     fontWeight: 'bold',
-    color: '#6366F1',
+    color: '#0EA5E9',
   },
   doseInfo: {
     flex: 1,
   },
   doseDrug: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
-    color: '#1F2937',
+    color: '#0F172A',
     marginBottom: 4,
   },
   doseDosage: {
     fontSize: 14,
     color: '#64748B',
-    fontWeight: '500',
   },
   takeButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: '#10B981',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#10B981',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
   },
   historyCard: {
+    backgroundColor: '#FFFFFF',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 12,
     marginBottom: 8,
-    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   historyLeft: {
     flexDirection: 'row',
@@ -388,20 +370,18 @@ const styles = StyleSheet.create({
     gap: 12,
     flex: 1,
   },
-  statusIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
+  statusDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
   },
   historyInfo: {
     flex: 1,
   },
   historyDrug: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
-    color: '#1F2937',
+    color: '#0F172A',
     marginBottom: 2,
   },
   historyDosage: {
@@ -413,18 +393,25 @@ const styles = StyleSheet.create({
     color: '#64748B',
     fontWeight: '600',
   },
-  emptyCard: {
+  emptyState: {
+    backgroundColor: '#FFFFFF',
     padding: 40,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 16,
     alignItems: 'center',
-    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderStyle: 'dashed',
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginTop: 12,
+    marginBottom: 4,
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#64748B',
-    marginTop: 12,
-    fontWeight: '600',
+    textAlign: 'center',
   },
 });
