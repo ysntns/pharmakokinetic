@@ -11,6 +11,7 @@ import {
   TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { medicationAPI, drugAPI } from '../../services/api';
 import { useAppStore } from '../../store/appStore';
 
@@ -46,8 +47,9 @@ export default function MedicationsScreen() {
     loadData();
   };
 
-  const filteredMedications = medications.filter(med =>
-    med.drug_name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredDrugs = drugs.filter(drug =>
+    drug.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    drug.active_ingredient.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   if (loading) {
@@ -63,11 +65,9 @@ export default function MedicationsScreen() {
       <View style={styles.header}>
         <View>
           <Text style={styles.appName}>Medilog</Text>
-          <Text style={styles.title}>İlaçlarım</Text>
+          <Text style={styles.title}>İlaç Veritabanı</Text>
+          <Text style={styles.subtitle}>Farmakokinetik bilgilerle</Text>
         </View>
-        <TouchableOpacity style={styles.addButton}>
-          <Ionicons name="add" size={24} color="#FFFFFF" />
-        </TouchableOpacity>
       </View>
 
       <View style={styles.searchContainer}>
@@ -91,54 +91,65 @@ export default function MedicationsScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
-        {filteredMedications.length > 0 ? (
-          filteredMedications.map((med) => (
-            <View key={med.id} style={styles.medCard}>
-              <View style={styles.medHeader}>
-                <View style={styles.medIcon}>
+        <Text style={styles.sectionTitle}>
+          {filteredDrugs.length} Türk İlacı
+        </Text>
+        
+        {filteredDrugs.length > 0 ? (
+          filteredDrugs.map((drug) => (
+            <TouchableOpacity
+              key={drug.id}
+              style={styles.drugCard}
+              onPress={() => router.push(`/drug-details/${drug.id}`)}
+            >
+              <View style={styles.drugHeader}>
+                <View style={styles.drugIcon}>
                   <Ionicons name="medical" size={24} color="#0EA5E9" />
                 </View>
-                <View style={styles.medInfo}>
-                  <Text style={styles.medName}>{med.drug_name}</Text>
-                  <Text style={styles.medDosage}>{med.dosage} • {med.dosage_form}</Text>
+                <View style={styles.drugInfo}>
+                  <Text style={styles.drugName}>{drug.name}</Text>
+                  <Text style={styles.activeIngredient}>{drug.active_ingredient}</Text>
+                  {drug.category && (
+                    <View style={styles.categoryBadge}>
+                      <Text style={styles.categoryText}>{drug.category}</Text>
+                    </View>
+                  )}
                 </View>
-                <TouchableOpacity style={styles.moreButton}>
-                  <Ionicons name="ellipsis-vertical" size={20} color="#64748B" />
-                </TouchableOpacity>
+                <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
               </View>
 
-              <View style={styles.medDetails}>
-                <View style={styles.detailRow}>
-                  <Ionicons name="time-outline" size={18} color="#0EA5E9" />
-                  <Text style={styles.detailText}>
-                    {med.specific_times.join(', ')}
-                  </Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Ionicons name="repeat-outline" size={18} color="#0EA5E9" />
-                  <Text style={styles.detailText}>Günde {med.times_per_day} kez</Text>
-                </View>
-                {med.with_food && (
-                  <View style={styles.detailRow}>
-                    <Ionicons name="restaurant-outline" size={18} color="#F59E0B" />
-                    <Text style={styles.detailText}>Yemekle birlikte</Text>
+              {drug.pharmacokinetics && (
+                <View style={styles.pkPreview}>
+                  <View style={styles.pkItem}>
+                    <Ionicons name="pulse" size={16} color="#10B981" />
+                    <Text style={styles.pkText}>
+                      Tmax: {drug.pharmacokinetics.peak_concentration_time}h
+                    </Text>
                   </View>
-                )}
-              </View>
-
-              {med.special_instructions && (
-                <View style={styles.instructionBox}>
-                  <Text style={styles.instructionText}>{med.special_instructions}</Text>
+                  <View style={styles.pkItem}>
+                    <Ionicons name="time" size={16} color="#F59E0B" />
+                    <Text style={styles.pkText}>
+                      t½: {drug.pharmacokinetics.half_life}h
+                    </Text>
+                  </View>
+                  {drug.pharmacokinetics.bioavailability && (
+                    <View style={styles.pkItem}>
+                      <Ionicons name="trending-up" size={16} color="#0EA5E9" />
+                      <Text style={styles.pkText}>
+                        F: {drug.pharmacokinetics.bioavailability}%
+                      </Text>
+                    </View>
+                  )}
                 </View>
               )}
-            </View>
+            </TouchableOpacity>
           ))
         ) : (
           <View style={styles.emptyState}>
-            <Ionicons name="medical-outline" size={64} color="#94A3B8" />
-            <Text style={styles.emptyTitle}>Henüz ilaç eklenmemiş</Text>
+            <Ionicons name="search-outline" size={64} color="#94A3B8" />
+            <Text style={styles.emptyTitle}>İlaç bulunamadı</Text>
             <Text style={styles.emptyText}>
-              İlk ilacınızı eklemek için + butonuna dokunun
+              Farklı bir arama terimi deneyin
             </Text>
           </View>
         )}
@@ -181,14 +192,11 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     color: '#0F172A',
+    marginBottom: 2,
   },
-  addButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#0EA5E9',
-    justifyContent: 'center',
-    alignItems: 'center',
+  subtitle: {
+    fontSize: 14,
+    color: '#64748B',
   },
   searchContainer: {
     backgroundColor: '#FFFFFF',
@@ -216,20 +224,26 @@ const styles = StyleSheet.create({
   content: {
     padding: 20,
   },
-  medCard: {
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#64748B',
+    marginBottom: 12,
+  },
+  drugCard: {
     backgroundColor: '#FFFFFF',
-    padding: 20,
+    padding: 16,
     borderRadius: 16,
-    marginBottom: 16,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
-  medHeader: {
+  drugHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
-  medIcon: {
+  drugIcon: {
     width: 48,
     height: 48,
     borderRadius: 12,
@@ -238,51 +252,49 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 12,
   },
-  medInfo: {
+  drugInfo: {
     flex: 1,
   },
-  medName: {
-    fontSize: 18,
+  drugName: {
+    fontSize: 16,
     fontWeight: '700',
     color: '#0F172A',
     marginBottom: 4,
   },
-  medDosage: {
-    fontSize: 14,
+  activeIngredient: {
+    fontSize: 13,
     color: '#64748B',
+    marginBottom: 4,
   },
-  moreButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#F8FAFC',
-    justifyContent: 'center',
-    alignItems: 'center',
+  categoryBadge: {
+    backgroundColor: '#E0F2FE',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
   },
-  medDetails: {
-    gap: 10,
-    marginBottom: 12,
+  categoryText: {
+    fontSize: 11,
+    color: '#0EA5E9',
+    fontWeight: '600',
   },
-  detailRow: {
+  pkPreview: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+  },
+  pkItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
-  detailText: {
-    fontSize: 14,
-    color: '#475569',
-  },
-  instructionBox: {
-    padding: 12,
-    borderRadius: 8,
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  instructionText: {
+  pkText: {
     fontSize: 13,
     color: '#475569',
-    lineHeight: 18,
+    fontWeight: '500',
   },
   emptyState: {
     backgroundColor: '#FFFFFF',
