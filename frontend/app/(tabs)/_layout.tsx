@@ -6,26 +6,24 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#6366F1',
+        tabBarActiveTintColor: '#0EA5E9',
         tabBarInactiveTintColor: '#94A3B8',
         tabBarStyle: {
-          backgroundColor: 'rgba(255, 255, 255, 0.9)',
-          borderTopWidth: 0,
-          elevation: 0,
-          height: Platform.OS === 'ios' ? 85 : 65,
+          backgroundColor: '#FFFFFF',
+          borderTopWidth: 1,
+          borderTopColor: '#E2E8F0',
+          height: Platform.OS === 'ios' ? 88 : 70,
           paddingTop: 8,
-          paddingBottom: Platform.OS === 'ios' ? 25 : 10,
-          position: 'absolute',
-          borderTopLeftRadius: 20,
-          borderTopRightRadius: 20,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: -3 },
-          shadowOpacity: 0.1,
-          shadowRadius: 10,
+          paddingBottom: Platform.OS === 'ios' ? 28 : 12,
+          paddingHorizontal: 8,
         },
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: '600',
+          marginTop: -4,
+        },
+        tabBarIconStyle: {
+          marginTop: 4,
         },
         headerShown: false,
       }}
@@ -35,7 +33,7 @@ export default function TabLayout() {
         options={{
           title: 'Ana Sayfa',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
+            <Ionicons name="home" size={24} color={color} />
           ),
         }}
       />
@@ -44,7 +42,7 @@ export default function TabLayout() {
         options={{
           title: 'İlaçlar',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="medical" size={size} color={color} />
+            <Ionicons name="medical" size={24} color={color} />
           ),
         }}
       />
@@ -53,7 +51,7 @@ export default function TabLayout() {
         options={{
           title: 'Doz',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="add-circle" size={size + 8} color={color} />
+            <Ionicons name="add-circle" size={28} color={color} />
           ),
         }}
       />
@@ -62,7 +60,7 @@ export default function TabLayout() {
         options={{
           title: 'İlerleme',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="analytics" size={size} color={color} />
+            <Ionicons name="analytics" size={24} color={color} />
           ),
         }}
       />
