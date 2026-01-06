@@ -55,15 +55,28 @@ export interface ProgressStats {
   total_active_medications: number;
 }
 
+export interface User {
+  id: string;
+  email: string;
+  full_name: string;
+}
+
 interface AppStore {
   drugs: Drug[];
   medications: MedicationSchedule[];
   todaysDoses: DoseLog[];
   progressStats: ProgressStats | null;
+  user: User | null;
+  token: string | null;
+  isAuthenticated: boolean;
   setDrugs: (drugs: Drug[]) => void;
   setMedications: (medications: MedicationSchedule[]) => void;
   setTodaysDoses: (doses: DoseLog[]) => void;
   setProgressStats: (stats: ProgressStats) => void;
+  setUser: (user: User | null) => void;
+  setToken: (token: string | null) => void;
+  setAuthenticated: (isAuth: boolean) => void;
+  logout: () => void;
 }
 
 export const useAppStore = create<AppStore>((set) => ({
@@ -71,8 +84,15 @@ export const useAppStore = create<AppStore>((set) => ({
   medications: [],
   todaysDoses: [],
   progressStats: null,
+  user: null,
+  token: null,
+  isAuthenticated: false,
   setDrugs: (drugs) => set({ drugs }),
   setMedications: (medications) => set({ medications }),
   setTodaysDoses: (doses) => set({ todaysDoses: doses }),
   setProgressStats: (stats) => set({ progressStats: stats }),
+  setUser: (user) => set({ user }),
+  setToken: (token) => set({ token }),
+  setAuthenticated: (isAuth) => set({ isAuthenticated: isAuth }),
+  logout: () => set({ user: null, token: null, isAuthenticated: false }),
 }));

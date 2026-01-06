@@ -13,7 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { BarCodeScanner } from 'expo-barcode-scanner';
 import * as ImagePicker from 'expo-image-picker';
-import { drugAPI } from '../services/api';
+import { drugAPI, ocrAPI } from '../services/api';
 
 interface AddDrugModalProps {
   visible: boolean;
@@ -24,8 +24,9 @@ interface AddDrugModalProps {
 export default function AddDrugModal({ visible, onClose, onSuccess }: AddDrugModalProps) {
   const [method, setMethod] = useState<'manual' | 'barcode' | 'photo' | null>(null);
   const [scanning, setScanning] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
-  
+
   // Form fields
   const [drugName, setDrugName] = useState('');
   const [activeIngredient, setActiveIngredient] = useState('');
@@ -50,6 +51,43 @@ export default function AddDrugModal({ visible, onClose, onSuccess }: AddDrugMod
     setMethod('manual');
   };
 
+  const analyzeImage = async (imageUri: string) => {
+    try {
+      setAnalyzing(true);
+      const result = await ocrAPI.analyzeDrugImage(imageUri);
+
+      if (result.success && result.data) {
+        // Fill form with extracted data
+        setDrugName(result.data.name || '');
+        setActiveIngredient(result.data.active_ingredient || '');
+        setDescription(result.data.description || '');
+        setDosages(result.data.standard_dosages?.join(', ') || '');
+
+        Alert.alert(
+          'Analiz Tamamlandı',
+          'İlaç bilgileri başarıyla çıkarıldı. Lütfen kontrol edip kaydedin.',
+          [{ text: 'Tamam' }]
+        );
+        setMethod('manual');
+      } else {
+        Alert.alert(
+          'Analiz Başarısız',
+          result.message || 'İlaç kutusu analiz edilemedi. Manuel olarak girebilirsiniz.',
+          [{ text: 'Manuel Gir', onPress: () => setMethod('manual') }]
+        );
+      }
+    } catch (error) {
+      console.error('Image analysis error:', error);
+      Alert.alert(
+        'Hata',
+        'İlaç kutusu analiz edilirken bir hata oluştu. Manuel olarak girebilirsiniz.',
+        [{ text: 'Manuel Gir', onPress: () => setMethod('manual') }]
+      );
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
   const handlePhotoSelect = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -60,15 +98,11 @@ export default function AddDrugModal({ visible, onClose, onSuccess }: AddDrugMod
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      quality: 1,
+      quality: 0.8,
     });
 
-    if (!result.canceled) {
-      Alert.alert(
-        'Fotoğraf Seçildi',
-        'İlaç kutusu fotoğrafı analiz ediliyor...\n\n(Gerçek uygulamada OCR/AI ile ilaç bilgisi çıkarılacak)',
-        [{ text: 'Tamam', onPress: () => setMethod('manual') }]
-      );
+    if (!result.canceled && result.assets[0]) {
+      await analyzeImage(result.assets[0].uri);
     }
   };
 
@@ -81,15 +115,11 @@ export default function AddDrugModal({ visible, onClose, onSuccess }: AddDrugMod
 
     const result = await ImagePicker.launchCameraAsync({
       allowsEditing: true,
-      quality: 1,
+      quality: 0.8,
     });
 
-    if (!result.canceled) {
-      Alert.alert(
-        'Fotoğraf Çekildi',
-        'İlaç kutusu fotoğrafı analiz ediliyor...\n\n(Gerçek uygulamada OCR/AI ile ilaç bilgisi çıkarılacak)',
-        [{ text: 'Tamam', onPress: () => setMethod('manual') }]
-      );
+    if (!result.canceled && result.assets[0]) {
+      await analyzeImage(result.assets[0].uri);
     }
   };
 

@@ -8,19 +8,41 @@ import {
   ActivityIndicator,
   RefreshControl,
   Platform,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { medicationAPI, doseAPI } from '../../services/api';
+import { useRouter } from 'expo-router';
+import { medicationAPI, doseAPI, authAPI } from '../../services/api';
 import { useAppStore, DoseLog } from '../../store/appStore';
 import { format, isToday, parseISO } from 'date-fns';
 import { tr } from 'date-fns/locale';
 
 export default function HomeScreen() {
+  const router = useRouter();
   const [todaysDoses, setTodaysDoses] = useState<DoseLog[]>([]);
   const [upcomingDoses, setUpcomingDoses] = useState<DoseLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const { medications, setMedications } = useAppStore();
+  const { medications, setMedications, logout, user } = useAppStore();
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Çıkış Yap',
+      'Çıkış yapmak istediğinize emin misiniz?',
+      [
+        { text: 'İptal', style: 'cancel' },
+        {
+          text: 'Çıkış Yap',
+          style: 'destructive',
+          onPress: async () => {
+            await authAPI.removeToken();
+            logout();
+            router.replace('/login');
+          },
+        },
+      ]
+    );
+  };
 
   const loadData = async () => {
     try {
@@ -112,9 +134,12 @@ export default function HomeScreen() {
         <View style={styles.header}>
           <View>
             <Text style={styles.appName}>Medilog</Text>
-            <Text style={styles.greeting}>Merhaba! 👋</Text>
+            <Text style={styles.greeting}>Merhaba {user?.full_name}! 👋</Text>
             <Text style={styles.date}>{format(new Date(), 'd MMMM EEEE', { locale: tr })}</Text>
           </View>
+          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+            <Ionicons name="log-out-outline" size={24} color="#EF4444" />
+          </TouchableOpacity>
         </View>
 
         {/* Stats Cards */}
@@ -231,12 +256,19 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 20,
     paddingTop: Platform.OS === 'ios' ? 60 : 40,
     paddingBottom: 24,
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
+  },
+  logoutButton: {
+    padding: 8,
+    marginTop: 4,
   },
   appName: {
     fontSize: 16,

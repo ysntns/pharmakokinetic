@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 from enum import Enum
@@ -29,6 +29,43 @@ class FrequencyType(str, Enum):
     WEEKLY = "weekly"
     AS_NEEDED = "as_needed"
     CUSTOM = "custom"
+
+
+# User Model
+class User(BaseModel):
+    id: str = Field(default_factory=lambda: str(datetime.now().timestamp()))
+    email: EmailStr
+    full_name: str
+    hashed_password: str
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class UserCreate(BaseModel):
+    email: EmailStr
+    full_name: str
+    password: str
+
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class PushTokenCreate(BaseModel):
+    token: str
+    device_type: str = "mobile"
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: dict
+
+
+class TokenData(BaseModel):
+    email: Optional[str] = None
 
 
 # Pharmacokinetics Model
@@ -79,7 +116,7 @@ class DrugCreate(BaseModel):
 # Medication Schedule Model
 class MedicationSchedule(BaseModel):
     id: str = Field(default_factory=lambda: str(datetime.now().timestamp()))
-    user_id: str = "default_user"  # For MVP, single user
+    user_id: str
     drug_id: str
     drug_name: str  # Denormalized for quick access
     dosage: str  # e.g., "10mg"
@@ -131,7 +168,7 @@ class MedicationScheduleUpdate(BaseModel):
 # Dose Log Model
 class DoseLog(BaseModel):
     id: str = Field(default_factory=lambda: str(datetime.now().timestamp()))
-    user_id: str = "default_user"
+    user_id: str
     medication_id: str
     drug_name: str  # Denormalized
     dosage: str
@@ -181,7 +218,7 @@ class DailyAdherence(BaseModel):
 
 class ProgressTracking(BaseModel):
     id: str = Field(default_factory=lambda: str(datetime.now().timestamp()))
-    user_id: str = "default_user"
+    user_id: str
     period_start: datetime
     period_end: datetime
     stats: ProgressStats
