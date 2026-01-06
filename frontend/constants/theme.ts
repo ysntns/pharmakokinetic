@@ -1,10 +1,11 @@
 export const colors = {
-  primary: '#2563EB',
-  primaryDark: '#1E40AF',
-  secondary: '#10B981',
-  background: '#FFFFFF',
+  primary: '#0EA5E9',
+  primaryDark: '#0284C7',
+  primaryLight: '#E0F2FE',
+  secondary: '#14B8A6',
+  background: '#F8FAFC',
   backgroundDark: '#0F172A',
-  surface: '#F8FAFC',
+  surface: '#FFFFFF',
   surfaceDark: '#1E293B',
   card: '#FFFFFF',
   cardDark: '#334155',
@@ -17,7 +18,7 @@ export const colors = {
   error: '#EF4444',
   success: '#10B981',
   warning: '#F59E0B',
-  info: '#3B82F6',
+  info: '#0EA5E9',
 };
 
 export const spacing = {
