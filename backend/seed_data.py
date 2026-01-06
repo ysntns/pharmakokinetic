@@ -1,6 +1,6 @@
 """
-Seed data script for PharmacoKinetic MVP
-Populates the database with sample drugs
+Seed data script for Medilog - Turkish Cardiology Medications
+Populates the database with common Turkish cardiovascular drugs
 """
 import asyncio
 import sys
@@ -17,7 +17,7 @@ from models import Drug, Pharmacokinetics, DosageForm
 load_dotenv()
 
 async def seed_drugs():
-    """Seed the database with common drugs"""
+    """Seed the database with common Turkish cardiovascular drugs"""
     mongo_url = os.environ['MONGO_URL']
     client = AsyncIOMotorClient(mongo_url)
     db = client[os.environ['DB_NAME']]
@@ -25,141 +25,182 @@ async def seed_drugs():
     # Clear existing drugs
     await db.drugs.delete_many({})
     
-    sample_drugs = [
+    turkish_cardio_drugs = [
         {
-            "name": "Amoxicillin",
-            "active_ingredient": "Amoxicillin trihydrate",
-            "description": "Broad-spectrum antibiotic used to treat bacterial infections",
-            "dosage_forms": [DosageForm.CAPSULE, DosageForm.TABLET, DosageForm.LIQUID],
-            "standard_dosages": ["250mg", "500mg", "875mg"],
-            "pharmacokinetics": {
-                "absorption_time": 1.0,
-                "peak_concentration_time": 1.5,
-                "half_life": 1.0,
-                "bioavailability": 90.0,
-                "protein_binding": 20.0,
-                "excretion_route": "Renal (60-90% unchanged)"
-            },
-            "interactions": ["Methotrexate", "Warfarin", "Allopurinol"],
-            "contraindications": ["Penicillin allergy", "Mononucleosis"],
-            "side_effects": ["Nausea", "Diarrhea", "Rash", "Vomiting"],
-            "warnings": ["Complete full course", "Take with food if stomach upset"],
-            "category": "Antibiotic"
-        },
-        {
-            "name": "Lisinopril",
-            "active_ingredient": "Lisinopril",
-            "description": "ACE inhibitor for high blood pressure and heart failure",
+            "name": "Coraspin 100 mg",
+            "active_ingredient": "Asetilsalisilik Asit (ASA)",
+            "description": "Kalp krizi ve inme riskini azaltan kan sulandırıcı ilaç",
             "dosage_forms": [DosageForm.TABLET],
-            "standard_dosages": ["2.5mg", "5mg", "10mg", "20mg", "40mg"],
-            "pharmacokinetics": {
-                "absorption_time": 1.0,
-                "peak_concentration_time": 7.0,
-                "half_life": 12.0,
-                "bioavailability": 25.0,
-                "protein_binding": 0.0,
-                "excretion_route": "Renal (100% unchanged)"
-            },
-            "interactions": ["NSAIDs", "Potassium supplements", "Lithium"],
-            "contraindications": ["Pregnancy", "Angioedema history"],
-            "side_effects": ["Dry cough", "Dizziness", "Headache", "Fatigue"],
-            "warnings": ["Monitor blood pressure", "Check kidney function"],
-            "category": "Antihypertensive"
-        },
-        {
-            "name": "Metformin",
-            "active_ingredient": "Metformin hydrochloride",
-            "description": "First-line medication for type 2 diabetes",
-            "dosage_forms": [DosageForm.TABLET],
-            "standard_dosages": ["500mg", "850mg", "1000mg"],
-            "pharmacokinetics": {
-                "absorption_time": 2.5,
-                "peak_concentration_time": 2.5,
-                "half_life": 5.0,
-                "bioavailability": 55.0,
-                "protein_binding": 0.0,
-                "excretion_route": "Renal (90% unchanged)"
-            },
-            "interactions": ["Alcohol", "Contrast dye", "Diuretics"],
-            "contraindications": ["Kidney disease", "Liver disease", "Heart failure"],
-            "side_effects": ["Nausea", "Diarrhea", "Gas", "Stomach upset"],
-            "warnings": ["Take with food", "Monitor kidney function", "Risk of lactic acidosis"],
-            "category": "Antidiabetic"
-        },
-        {
-            "name": "Atorvastatin",
-            "active_ingredient": "Atorvastatin calcium",
-            "description": "Statin for lowering cholesterol and preventing cardiovascular disease",
-            "dosage_forms": [DosageForm.TABLET],
-            "standard_dosages": ["10mg", "20mg", "40mg", "80mg"],
-            "pharmacokinetics": {
-                "absorption_time": 1.0,
-                "peak_concentration_time": 2.0,
-                "half_life": 14.0,
-                "bioavailability": 14.0,
-                "protein_binding": 98.0,
-                "metabolism_pathway": "CYP3A4",
-                "excretion_route": "Biliary"
-            },
-            "interactions": ["Grapefruit juice", "Cyclosporine", "Gemfibrozil"],
-            "contraindications": ["Active liver disease", "Pregnancy", "Breastfeeding"],
-            "side_effects": ["Muscle pain", "Headache", "Nausea", "Diarrhea"],
-            "warnings": ["Monitor liver function", "Report muscle pain", "Avoid grapefruit"],
-            "category": "Statin"
-        },
-        {
-            "name": "Omeprazole",
-            "active_ingredient": "Omeprazole",
-            "description": "Proton pump inhibitor for acid reflux and stomach ulcers",
-            "dosage_forms": [DosageForm.CAPSULE, DosageForm.TABLET],
-            "standard_dosages": ["10mg", "20mg", "40mg"],
+            "standard_dosages": ["100mg"],
             "pharmacokinetics": {
                 "absorption_time": 0.5,
-                "peak_concentration_time": 1.5,
-                "half_life": 1.0,
-                "bioavailability": 40.0,
-                "protein_binding": 95.0,
-                "metabolism_pathway": "CYP2C19, CYP3A4",
-                "excretion_route": "Renal and biliary"
+                "peak_concentration_time": 1.0,
+                "half_life": 0.3,
+                "bioavailability": 80.0,
+                "protein_binding": 90.0,
+                "excretion_route": "Böbrek (renal)"
             },
-            "interactions": ["Clopidogrel", "Warfarin", "Diazepam"],
-            "contraindications": ["Hypersensitivity to PPIs"],
-            "side_effects": ["Headache", "Diarrhea", "Nausea", "Abdominal pain"],
-            "warnings": ["Take before meals", "Long-term use may affect bone density"],
-            "category": "Proton Pump Inhibitor"
+            "interactions": ["Warfarin", "İbuprofen", "Metotreksat", "Kortikosteroidler"],
+            "contraindications": ["Aktif kanama", "Mide ülseri", "Hemofili", "Hamilelerin son trimester"],
+            "side_effects": ["Mide rahatsızlığı", "Kanama riski", "Kulak çınlaması", "Baş dönmesi"],
+            "warnings": ["Aç karnına almayın", "Kanama belirtilerini izleyin", "Alkol tüketimini sınırlayın"],
+            "category": "Antiplatelet / Kan Sulandırıcı"
         },
         {
-            "name": "Levothyroxine",
-            "active_ingredient": "Levothyroxine sodium",
-            "description": "Thyroid hormone replacement for hypothyroidism",
+            "name": "Plavix 75 mg",
+            "active_ingredient": "Klopidogrel",
+            "description": "Kalp krizi ve inme sonrası kullanılan kan pıhtılaşmasını önleyici ilaç",
             "dosage_forms": [DosageForm.TABLET],
-            "standard_dosages": ["25mcg", "50mcg", "75mcg", "100mcg", "125mcg"],
+            "standard_dosages": ["75mg", "300mg"],
+            "pharmacokinetics": {
+                "absorption_time": 1.0,
+                "peak_concentration_time": 1.0,
+                "half_life": 7.0,
+                "bioavailability": 50.0,
+                "protein_binding": 98.0,
+                "metabolism_pathway": "CYP2C19",
+                "excretion_route": "Böbrek ve safra yoluyla"
+            },
+            "interactions": ["Aspirin", "Warfarin", "Omeprazol", "NSAİİ'ler"],
+            "contraindications": ["Aktif kanama", "Ağır karaciğer hastalığı"],
+            "side_effects": ["Kanama", "Morarma", "Burun kanaması", "Baş ağrısı"],
+            "warnings": ["Ameliyattan 5-7 gün önce kesin", "Aşırı kanama varsa doktora başvurun"],
+            "category": "Antiplatelet / Kan Sulandırıcı"
+        },
+        {
+            "name": "Concor 5 mg",
+            "active_ingredient": "Bisoprolol",
+            "description": "Yüksek tansiyon ve kalp yetmezliği tedavisinde kullanılan beta bloker",
+            "dosage_forms": [DosageForm.TABLET],
+            "standard_dosages": ["2.5mg", "5mg", "10mg"],
             "pharmacokinetics": {
                 "absorption_time": 2.0,
-                "peak_concentration_time": 4.0,
-                "half_life": 168.0,
-                "bioavailability": 80.0,
-                "protein_binding": 99.0,
-                "excretion_route": "Renal and fecal"
+                "peak_concentration_time": 3.0,
+                "half_life": 11.0,
+                "bioavailability": 90.0,
+                "protein_binding": 30.0,
+                "excretion_route": "Böbrek (50%) ve karaciğer (50%)"
             },
-            "interactions": ["Calcium", "Iron", "Soy", "Coffee"],
-            "contraindications": ["Untreated adrenal insufficiency", "Thyrotoxicosis"],
-            "side_effects": ["Weight loss", "Tremor", "Headache", "Insomnia"],
-            "warnings": ["Take on empty stomach", "Wait 30-60 min before eating", "Monitor TSH levels"],
-            "category": "Thyroid Hormone"
+            "interactions": ["Diltiazem", "Verapamil", "İnsülin", "Adrenalin"],
+            "contraindications": ["Ağır astım", "Bradikardi", "Kardiyo​jenik şok", "Dekompanse kalp yetmezliği"],
+            "side_effects": ["Yorgunluk", "Baş dönmesi", "Düşük nabız", "Soğuk el-ayak"],
+            "warnings": ["Aniden kesmeyin", "Nabız ve tansiyonunuzu takip edin", "Diyabetliyseniz dikkatli olun"],
+            "category": "Beta Bloker / Kalp İlacı"
+        },
+        {
+            "name": "Crestor 10 mg",
+            "active_ingredient": "Rosuvastatin",
+            "description": "Yüksek kolesterol tedavisinde kullanılan güçlü statin ilacı",
+            "dosage_forms": [DosageForm.TABLET],
+            "standard_dosages": ["5mg", "10mg", "20mg", "40mg"],
+            "pharmacokinetics": {
+                "absorption_time": 3.0,
+                "peak_concentration_time": 5.0,
+                "half_life": 19.0,
+                "bioavailability": 20.0,
+                "protein_binding": 88.0,
+                "metabolism_pathway": "CYP2C9 (minimal)",
+                "excretion_route": "Safra yoluyla (dışkı)"
+            },
+            "interactions": ["Gemfibrozil", "Siklosporin", "Warfarin", "Antiasitler"],
+            "contraindications": ["Aktif karaciğer hastalığı", "Hamilelik", "Emzirme"],
+            "side_effects": ["Kas ağrısı", "Baş ağrısı", "Karın ağrısı", "Bulantı"],
+            "warnings": ["Akşam alın", "Kas ağrısı olursa doktora bildirin", "Greyfurt suyu içmeyin"],
+            "category": "Statin / Kolesterol İlacı"
+        },
+        {
+            "name": "Ezetrol 10 mg",
+            "active_ingredient": "Ezetimib",
+            "description": "Kolesterol emilimini azaltan ilaç, genellikle statinlerle birlikte kullanılır",
+            "dosage_forms": [DosageForm.TABLET],
+            "standard_dosages": ["10mg"],
+            "pharmacokinetics": {
+                "absorption_time": 1.0,
+                "peak_concentration_time": 1.5,
+                "half_life": 22.0,
+                "bioavailability": 35.0,
+                "protein_binding": 99.0,
+                "excretion_route": "Safra ve böbrek"
+            },
+            "interactions": ["Fibratlar", "Siklosporin", "Statinler (birlikte kullanılabilir)"],
+            "contraindications": ["Aktif karaciğer hastalığı", "Hamilelik (statin ile)"],
+            "side_effects": ["Baş ağrısı", "Yorgunluk", "İshal", "Kas ağrısı"],
+            "warnings": ["Günün herhangi bir saatinde alınabilir", "Karaciğer fonksiyonlarını takip edin"],
+            "category": "Kolesterol Emilim İnhibitörü"
+        },
+        {
+            "name": "Norvasc 5 mg",
+            "active_ingredient": "Amlodipin",
+            "description": "Yüksek tansiyon ve anjina tedavisinde kullanılan kalsiyum kanal blokeri",
+            "dosage_forms": [DosageForm.TABLET],
+            "standard_dosages": ["5mg", "10mg"],
+            "pharmacokinetics": {
+                "absorption_time": 6.0,
+                "peak_concentration_time": 8.0,
+                "half_life": 40.0,
+                "bioavailability": 65.0,
+                "protein_binding": 98.0,
+                "metabolism_pathway": "Karaciğer (CYP3A4)",
+                "excretion_route": "Böbrek (idrar)"
+            },
+            "interactions": ["Simvastatin", "Tacrolimus", "Siklosporin", "Diltiazem"],
+            "contraindications": ["Ağır hipotansiyon", "Kardiyojenik şok", "Aortik stenoz"],
+            "side_effects": ["Şişlik (ayaklarda)", "Baş ağrısı", "Yorgunluk", "Çarpıntı"],
+            "warnings": ["Ayak şişliği normaldir", "Yavaşça ayağa kalkın (baş dönmesi)", "Greyfurt suyu içmeyin"],
+            "category": "Kalsiyum Kanal Blokeri / Tansiyon İlacı"
+        },
+        {
+            "name": "Preterax",
+            "active_ingredient": "Perindopril + İndapamid",
+            "description": "ACE inhibitörü ve diüretik kombinasyonu, yüksek tansiyon tedavisi",
+            "dosage_forms": [DosageForm.TABLET],
+            "standard_dosages": ["5mg/1.25mg", "10mg/2.5mg"],
+            "pharmacokinetics": {
+                "absorption_time": 1.0,
+                "peak_concentration_time": 3.0,
+                "half_life": 17.0,
+                "bioavailability": 75.0,
+                "protein_binding": 20.0,
+                "excretion_route": "Böbrek"
+            },
+            "interactions": ["Potasyum takviyeleri", "Lityum", "NSAİİ'ler", "Diüretikler"],
+            "contraindications": ["Hamilelik", "Anjiyoödem geçmişi", "Bilateral renal arter stenozu"],
+            "side_effects": ["Kuru öksürük", "Baş dönmesi", "Hipotansiyon", "Yorgunluk"],
+            "warnings": ["Sabah aç karnına alın", "Bol su için", "Potasyum seviyenizi kontrol edin"],
+            "category": "ACE İnhibitörü + Diüretik Kombinasyonu"
+        },
+        {
+            "name": "Delix 5 mg",
+            "active_ingredient": "Ramipril",
+            "description": "Kalp yetmezliği ve yüksek tansiyon tedavisinde ACE inhibitörü",
+            "dosage_forms": [DosageForm.TABLET, DosageForm.CAPSULE],
+            "standard_dosages": ["2.5mg", "5mg", "10mg"],
+            "pharmacokinetics": {
+                "absorption_time": 1.0,
+                "peak_concentration_time": 3.0,
+                "half_life": 13.0,
+                "bioavailability": 28.0,
+                "protein_binding": 73.0,
+                "excretion_route": "Böbrek (60%) ve safra (40%)"
+            },
+            "interactions": ["NSAİİ'ler", "Potasyum", "Diüretikler", "Lityum"],
+            "contraindications": ["Hamilelik", "Anjiyoödem", "Bilateral renal arter stenozu"],
+            "side_effects": ["Kuru öksürük", "Baş dönmesi", "Yorgunluk", "Hipotansiyon"],
+            "warnings": ["Yemeklerle veya yemeksiz alınabilir", "Hamilelikte kullanmayın", "Böbrek fonksiyonlarını izleyin"],
+            "category": "ACE İnhibitörü / Kalp İlacı"
         }
     ]
     
-    for drug_data in sample_drugs:
+    for drug_data in turkish_cardio_drugs:
         drug = Drug(**drug_data)
         drug_dict = drug.dict()
         drug_dict["created_at"] = drug.created_at.isoformat()
         drug_dict["updated_at"] = drug.updated_at.isoformat()
         
         result = await db.drugs.insert_one(drug_dict)
-        print(f"✓ Added: {drug.name} (ID: {drug.id})")
+        print(f"✓ Eklendi: {drug.name} (ID: {drug.id})")
     
-    print(f"\n✓ Successfully seeded {len(sample_drugs)} drugs!")
+    print(f"\n✓ Başarıyla {len(turkish_cardio_drugs)} Türk kardiyoloji ilacı eklendi!")
     client.close()
 
 
