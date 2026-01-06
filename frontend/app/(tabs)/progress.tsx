@@ -9,8 +9,6 @@ import {
   Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import { progressAPI } from '../../services/api';
 
 const { width } = Dimensions.get('window');
@@ -37,114 +35,107 @@ export default function ProgressScreen() {
 
   if (loading) {
     return (
-      <LinearGradient colors={['#6366F1', '#8B5CF6', '#D946EF']} style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#FFFFFF" />
-      </LinearGradient>
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0EA5E9" />
+      </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={['#6366F1', '#8B5CF6', '#D946EF']} style={styles.gradient}>
-        <View style={styles.header}>
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.appName}>Medilog</Text>
           <Text style={styles.title}>İlerleme</Text>
           <Text style={styles.subtitle}>Son 30 gün</Text>
         </View>
+      </View>
 
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Adherence Card */}
-          <BlurView intensity={20} tint="light" style={styles.adherenceCard}>
-            <Text style={styles.adherenceTitle}>Uyum Oranı</Text>
-            <View style={styles.adherenceCircle}>
-              <Text style={styles.adherenceNumber}>
-                {stats?.stats?.adherence_rate.toFixed(0) || 0}%
-              </Text>
-            </View>
-            <Text style={styles.adherenceSubtitle}>
-              {stats?.stats?.doses_taken || 0} / {stats?.stats?.total_doses_scheduled || 0} doz alındı
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Main Adherence Card */}
+        <View style={styles.mainCard}>
+          <Text style={styles.cardTitle}>Genel Uyum Oranı</Text>
+          <View style={styles.adherenceCircle}>
+            <Text style={styles.adherenceNumber}>
+              {stats?.stats?.adherence_rate.toFixed(0) || 0}%
             </Text>
-          </BlurView>
+          </View>
+          <Text style={styles.adherenceSubtitle}>
+            {stats?.stats?.doses_taken || 0} / {stats?.stats?.total_doses_scheduled || 0} doz alındı
+          </Text>
+        </View>
 
-          {/* Stats Grid */}
-          <View style={styles.statsGrid}>
-            <BlurView intensity={15} tint="light" style={styles.statItem}>
-              <View style={[styles.statIcon, { backgroundColor: '#10B98120' }]}>
-                <Ionicons name="checkmark-circle" size={32} color="#10B981" />
-              </View>
-              <Text style={styles.statNumber}>{stats?.stats?.doses_taken || 0}</Text>
-              <Text style={styles.statLabel}>Alınan</Text>
-            </BlurView>
-
-            <BlurView intensity={15} tint="light" style={styles.statItem}>
-              <View style={[styles.statIcon, { backgroundColor: '#EF444420' }]}>
-                <Ionicons name="close-circle" size={32} color="#EF4444" />
-              </View>
-              <Text style={styles.statNumber}>{stats?.stats?.doses_missed || 0}</Text>
-              <Text style={styles.statLabel}>Kaçırılan</Text>
-            </BlurView>
-
-            <BlurView intensity={15} tint="light" style={styles.statItem}>
-              <View style={[styles.statIcon, { backgroundColor: '#F59E0B20' }]}>
-                <Ionicons name="flame" size={32} color="#F59E0B" />
-              </View>
-              <Text style={styles.statNumber}>{stats?.stats?.current_streak || 0}</Text>
-              <Text style={styles.statLabel}>Seri</Text>
-            </BlurView>
-
-            <BlurView intensity={15} tint="light" style={styles.statItem}>
-              <View style={[styles.statIcon, { backgroundColor: '#6366F120' }]}>
-                <Ionicons name="medical" size={32} color="#6366F1" />
-              </View>
-              <Text style={styles.statNumber}>
-                {stats?.stats?.total_active_medications || 0}
-              </Text>
-              <Text style={styles.statLabel}>Aktif İlaç</Text>
-            </BlurView>
+        {/* Stats Grid */}
+        <View style={styles.statsGrid}>
+          <View style={[styles.statCard, { backgroundColor: '#D1FAE5' }]}>
+            <Ionicons name="checkmark-circle" size={28} color="#10B981" />
+            <Text style={styles.statNumber}>{stats?.stats?.doses_taken || 0}</Text>
+            <Text style={styles.statLabel}>Alınan</Text>
           </View>
 
-          {/* Daily Adherence */}
-          <BlurView intensity={15} tint="light" style={styles.dailyCard}>
-            <Text style={styles.sectionTitle}>Günlük Takip</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dailyScroll}>
-              {stats?.daily_adherence?.slice(-14).map((day: any, index: number) => {
-                const rate = day.rate || 0;
-                const color = rate === 100 ? '#10B981' : rate >= 50 ? '#F59E0B' : '#EF4444';
-                const height = Math.max((rate / 100) * 120, 20);
-                
-                return (
-                  <View key={index} style={styles.dayColumn}>
-                    <View style={styles.barContainer}>
-                      <View style={[styles.bar, { height, backgroundColor: color }]} />
-                    </View>
-                    <Text style={styles.dayLabel}>
-                      {new Date(day.date).getDate()}
-                    </Text>
+          <View style={[styles.statCard, { backgroundColor: '#FEE2E2' }]}>
+            <Ionicons name="close-circle" size={28} color="#EF4444" />
+            <Text style={styles.statNumber}>{stats?.stats?.doses_missed || 0}</Text>
+            <Text style={styles.statLabel}>Kaçırılan</Text>
+          </View>
+
+          <View style={[styles.statCard, { backgroundColor: '#FEF3C7' }]}>
+            <Ionicons name="flame" size={28} color="#F59E0B" />
+            <Text style={styles.statNumber}>{stats?.stats?.current_streak || 0}</Text>
+            <Text style={styles.statLabel}>Seri</Text>
+          </View>
+
+          <View style={[styles.statCard, { backgroundColor: '#E0F2FE' }]}>
+            <Ionicons name="medical" size={28} color="#0EA5E9" />
+            <Text style={styles.statNumber}>
+              {stats?.stats?.total_active_medications || 0}
+            </Text>
+            <Text style={styles.statLabel}>Aktif İlaç</Text>
+          </View>
+        </View>
+
+        {/* Daily Chart */}
+        <View style={styles.chartCard}>
+          <Text style={styles.cardTitle}>Son 14 Gün</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chartScroll}>
+            {stats?.daily_adherence?.slice(-14).map((day: any, index: number) => {
+              const rate = day.rate || 0;
+              const color = rate === 100 ? '#10B981' : rate >= 50 ? '#F59E0B' : '#EF4444';
+              const height = Math.max((rate / 100) * 100, 10);
+              
+              return (
+                <View key={index} style={styles.dayColumn}>
+                  <View style={styles.barContainer}>
+                    <View style={[styles.bar, { height, backgroundColor: color }]} />
                   </View>
-                );
-              })}
-            </ScrollView>
-          </BlurView>
+                  <Text style={styles.dayLabel}>
+                    {new Date(day.date).getDate()}
+                  </Text>
+                </View>
+              );
+            })}
+          </ScrollView>
+        </View>
 
-          {/* Tips */}
-          <BlurView intensity={10} tint="light" style={styles.tipsCard}>
-            <View style={styles.tipIcon}>
-              <Ionicons name="bulb" size={28} color="#F59E0B" />
-            </View>
-            <View style={styles.tipContent}>
-              <Text style={styles.tipTitle}>İpucu</Text>
-              <Text style={styles.tipText}>
-                İlaçlarınızı düzenli almak için hatırlatıcıları açmayı unutmayın!
-              </Text>
-            </View>
-          </BlurView>
+        {/* Tips */}
+        <View style={styles.tipCard}>
+          <View style={styles.tipIcon}>
+            <Ionicons name="bulb" size={24} color="#F59E0B" />
+          </View>
+          <View style={styles.tipContent}>
+            <Text style={styles.tipTitle}>İpucu</Text>
+            <Text style={styles.tipText}>
+              İlaçlarınızı düzenli almak için hatırlatıcıları açmayı unutmayın!
+            </Text>
+          </View>
+        </View>
 
-          <View style={{ height: 100 }} />
-        </ScrollView>
-      </LinearGradient>
+        <View style={{ height: 100 }} />
+      </ScrollView>
     </View>
   );
 }
@@ -152,71 +143,79 @@ export default function ProgressScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  gradient: {
-    flex: 1,
+    backgroundColor: '#F8FAFC',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#F8FAFC',
   },
   header: {
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 20,
     paddingTop: Platform.OS === 'ios' ? 60 : 40,
     paddingBottom: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+  },
+  appName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#0EA5E9',
+    marginBottom: 4,
+    letterSpacing: 0.5,
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#0F172A',
     marginBottom: 4,
   },
   subtitle: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: 15,
+    color: '#64748B',
   },
   scrollView: {
     flex: 1,
   },
-  scrollContent: {
-    paddingHorizontal: 20,
+  content: {
+    padding: 20,
   },
-  adherenceCard: {
+  mainCard: {
+    backgroundColor: '#FFFFFF',
     padding: 32,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 16,
     alignItems: 'center',
     marginBottom: 20,
-    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
-  adherenceTitle: {
-    fontSize: 18,
+  cardTitle: {
+    fontSize: 16,
     fontWeight: '600',
     color: '#64748B',
     marginBottom: 20,
   },
   adherenceCircle: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    backgroundColor: 'rgba(99, 102, 241, 0.1)',
-    borderWidth: 12,
-    borderColor: '#6366F1',
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: '#E0F2FE',
+    borderWidth: 10,
+    borderColor: '#0EA5E9',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
   },
   adherenceNumber: {
-    fontSize: 52,
+    fontSize: 48,
     fontWeight: 'bold',
-    color: '#1F2937',
+    color: '#0F172A',
   },
   adherenceSubtitle: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#64748B',
-    fontWeight: '500',
   },
   statsGrid: {
     flexDirection: 'row',
@@ -224,49 +223,33 @@ const styles = StyleSheet.create({
     gap: 12,
     marginBottom: 20,
   },
-  statItem: {
+  statCard: {
     width: (width - 52) / 2,
     padding: 20,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 16,
     alignItems: 'center',
-    overflow: 'hidden',
-  },
-  statIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
   },
   statNumber: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#1F2937',
+    color: '#0F172A',
+    marginTop: 12,
     marginBottom: 4,
   },
   statLabel: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#64748B',
-    fontWeight: '500',
+    fontWeight: '600',
   },
-  dailyCard: {
+  chartCard: {
+    backgroundColor: '#FFFFFF',
     padding: 20,
-    borderRadius: 24,
+    borderRadius: 16,
+    marginBottom: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    marginBottom: 20,
-    overflow: 'hidden',
+    borderColor: '#E2E8F0',
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginBottom: 20,
-  },
-  dailyScroll: {
+  chartScroll: {
     marginHorizontal: -8,
   },
   dayColumn: {
@@ -274,32 +257,32 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
   },
   barContainer: {
-    height: 120,
+    height: 100,
     justifyContent: 'flex-end',
     marginBottom: 8,
   },
   bar: {
-    width: 24,
-    borderRadius: 12,
+    width: 20,
+    borderRadius: 10,
   },
   dayLabel: {
     fontSize: 12,
     color: '#64748B',
     fontWeight: '600',
   },
-  tipsCard: {
+  tipCard: {
+    backgroundColor: '#FFFFFF',
     flexDirection: 'row',
     padding: 20,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 16,
     gap: 16,
-    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   tipIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: '#FEF3C7',
     justifyContent: 'center',
     alignItems: 'center',
@@ -310,7 +293,7 @@ const styles = StyleSheet.create({
   tipTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1F2937',
+    color: '#0F172A',
     marginBottom: 4,
   },
   tipText: {
