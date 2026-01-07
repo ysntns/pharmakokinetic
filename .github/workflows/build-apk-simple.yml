@@ -32,13 +32,6 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      - name: 🔧 Install Expo CLI
-        run: npm install -g @expo/ngrok@^4.1.0 expo-cli eas-cli
-
-      - name: 📱 Prebuild Android
-        working-directory: frontend
-        run: npx expo prebuild --platform android --clean
-
       - name: 🔨 Build APK with Gradle
         working-directory: frontend/android
         run: |
