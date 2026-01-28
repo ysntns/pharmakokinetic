@@ -3,7 +3,7 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
+  FlatList,
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
@@ -83,68 +83,21 @@ export default function MedicationsScreen() {
         </View>
       </View>
 
-      <ScrollView
+      <FlatList
         style={styles.scrollView}
         contentContainerStyle={styles.content}
+        data={filteredDrugs}
+        keyExtractor={(item) => item.id}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#0EA5E9" />
         }
         showsVerticalScrollIndicator={false}
-      >
-        <Text style={styles.sectionTitle}>
-          {filteredDrugs.length} Türk İlacı
-        </Text>
-        
-        {filteredDrugs.length > 0 ? (
-          filteredDrugs.map((drug) => (
-            <TouchableOpacity
-              key={drug.id}
-              style={styles.drugCard}
-              onPress={() => router.push(`/drug-details/${drug.id}`)}
-            >
-              <View style={styles.drugHeader}>
-                <View style={styles.drugIcon}>
-                  <Ionicons name="medical" size={24} color="#0EA5E9" />
-                </View>
-                <View style={styles.drugInfo}>
-                  <Text style={styles.drugName}>{drug.name}</Text>
-                  <Text style={styles.activeIngredient}>{drug.active_ingredient}</Text>
-                  {drug.category && (
-                    <View style={styles.categoryBadge}>
-                      <Text style={styles.categoryText}>{drug.category}</Text>
-                    </View>
-                  )}
-                </View>
-                <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
-              </View>
-
-              {drug.pharmacokinetics && (
-                <View style={styles.pkPreview}>
-                  <View style={styles.pkItem}>
-                    <Ionicons name="pulse" size={16} color="#10B981" />
-                    <Text style={styles.pkText}>
-                      Tmax: {drug.pharmacokinetics.peak_concentration_time}h
-                    </Text>
-                  </View>
-                  <View style={styles.pkItem}>
-                    <Ionicons name="time" size={16} color="#F59E0B" />
-                    <Text style={styles.pkText}>
-                      t½: {drug.pharmacokinetics.half_life}h
-                    </Text>
-                  </View>
-                  {drug.pharmacokinetics.bioavailability && (
-                    <View style={styles.pkItem}>
-                      <Ionicons name="trending-up" size={16} color="#0EA5E9" />
-                      <Text style={styles.pkText}>
-                        F: {drug.pharmacokinetics.bioavailability}%
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              )}
-            </TouchableOpacity>
-          ))
-        ) : (
+        ListHeaderComponent={
+          <Text style={styles.sectionTitle}>
+            {filteredDrugs.length} Türk İlacı
+          </Text>
+        }
+        ListEmptyComponent={
           <View style={styles.emptyState}>
             <Ionicons name="search-outline" size={64} color="#94A3B8" />
             <Text style={styles.emptyTitle}>İlaç bulunamadı</Text>
@@ -152,9 +105,56 @@ export default function MedicationsScreen() {
               Farklı bir arama terimi deneyin
             </Text>
           </View>
+        }
+        ListFooterComponent={<View style={{ height: 100 }} />}
+        renderItem={({ item: drug }) => (
+          <TouchableOpacity
+            style={styles.drugCard}
+            onPress={() => router.push(`/drug-details/${drug.id}`)}
+          >
+            <View style={styles.drugHeader}>
+              <View style={styles.drugIcon}>
+                <Ionicons name="medical" size={24} color="#0EA5E9" />
+              </View>
+              <View style={styles.drugInfo}>
+                <Text style={styles.drugName}>{drug.name}</Text>
+                <Text style={styles.activeIngredient}>{drug.active_ingredient}</Text>
+                {drug.category && (
+                  <View style={styles.categoryBadge}>
+                    <Text style={styles.categoryText}>{drug.category}</Text>
+                  </View>
+                )}
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
+            </View>
+
+            {drug.pharmacokinetics && (
+              <View style={styles.pkPreview}>
+                <View style={styles.pkItem}>
+                  <Ionicons name="pulse" size={16} color="#10B981" />
+                  <Text style={styles.pkText}>
+                    Tmax: {drug.pharmacokinetics.peak_concentration_time}h
+                  </Text>
+                </View>
+                <View style={styles.pkItem}>
+                  <Ionicons name="time" size={16} color="#F59E0B" />
+                  <Text style={styles.pkText}>
+                    t½: {drug.pharmacokinetics.half_life}h
+                  </Text>
+                </View>
+                {drug.pharmacokinetics.bioavailability && (
+                  <View style={styles.pkItem}>
+                    <Ionicons name="trending-up" size={16} color="#0EA5E9" />
+                    <Text style={styles.pkText}>
+                      F: {drug.pharmacokinetics.bioavailability}%
+                    </Text>
+                  </View>
+                )}
+              </View>
+            )}
+          </TouchableOpacity>
         )}
-        <View style={{ height: 100 }} />
-      </ScrollView>
+      />
     </View>
   );
 }
