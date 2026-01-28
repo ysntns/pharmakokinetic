@@ -21,6 +21,7 @@ from auth import (
     get_password_hash, verify_password, create_access_token,
     get_current_user, get_current_active_user, security
 )
+from utils import calculate_streak, calculate_longest_streak
 
 
 ROOT_DIR = Path(__file__).parent
@@ -523,40 +524,25 @@ async def get_progress(
     end_date = datetime.utcnow()
     start_date = end_date - timedelta(days=days)
 
-    # Get all dose logs in the period
-    doses = await db.dose_logs.find({
-        "user_id": current_user["id"],
-        "scheduled_time": {
-            "$gte": start_date.isoformat(),
-            "$lte": end_date.isoformat()
-        }
-    }).to_list(10000)
-    
-    # Calculate statistics
-    total_scheduled = len(doses)
-    taken = len([d for d in doses if d.get("status") == DoseStatus.TAKEN])
-    missed = len([d for d in doses if d.get("status") == DoseStatus.MISSED])
-    skipped = len([d for d in doses if d.get("status") == DoseStatus.SKIPPED])
-    
-    adherence_rate = (taken / total_scheduled * 100) if total_scheduled > 0 else 0
+    # Get all dose logs for streak calculation
+    all_doses = await db.dose_logs.find({
+        "user_id": current_user["id"]
+    }).sort("scheduled_time", 1).to_list(10000)
 
-    # Get active medications count
-    active_meds = await db.medications.count_documents({"user_id": current_user["id"], "active": True})
-    
-    # Calculate daily adherence
-    daily_stats = {}
-    for dose in doses:
+    # Calculate full history daily adherence for streaks
+    full_daily_stats = {}
+    for dose in all_doses:
         date_str = dose.get("scheduled_time", "")[:10]  # YYYY-MM-DD
-        if date_str not in daily_stats:
-            daily_stats[date_str] = {"scheduled": 0, "taken": 0, "missed": 0}
+        if date_str not in full_daily_stats:
+            full_daily_stats[date_str] = {"scheduled": 0, "taken": 0, "missed": 0}
         
-        daily_stats[date_str]["scheduled"] += 1
+        full_daily_stats[date_str]["scheduled"] += 1
         if dose.get("status") == DoseStatus.TAKEN:
-            daily_stats[date_str]["taken"] += 1
+            full_daily_stats[date_str]["taken"] += 1
         elif dose.get("status") == DoseStatus.MISSED:
-            daily_stats[date_str]["missed"] += 1
+            full_daily_stats[date_str]["missed"] += 1
     
-    daily_adherence = [
+    full_daily_adherence = [
         DailyAdherence(
             date=date,
             scheduled=stats["scheduled"],
@@ -564,11 +550,35 @@ async def get_progress(
             missed=stats["missed"],
             rate=(stats["taken"] / stats["scheduled"] * 100) if stats["scheduled"] > 0 else 0
         )
-        for date, stats in sorted(daily_stats.items())
+        for date, stats in sorted(full_daily_stats.items())
     ]
+
+    # Calculate streaks from full history
+    current_streak = calculate_streak(full_daily_adherence)
+    longest_streak = calculate_longest_streak(full_daily_adherence)
+
+    # Filter doses for the requested period statistics
+    period_doses = [
+        d for d in all_doses
+        if start_date.isoformat() <= d.get("scheduled_time", "") <= end_date.isoformat()
+    ]
+
+    # Calculate statistics for the period
+    total_scheduled = len(period_doses)
+    taken = len([d for d in period_doses if d.get("status") == DoseStatus.TAKEN])
+    missed = len([d for d in period_doses if d.get("status") == DoseStatus.MISSED])
+    skipped = len([d for d in period_doses if d.get("status") == DoseStatus.SKIPPED])
     
-    # Calculate streak
-    current_streak = calculate_streak(daily_adherence)
+    adherence_rate = (taken / total_scheduled * 100) if total_scheduled > 0 else 0
+
+    # Filter daily adherence for the period
+    period_daily_adherence = [
+        da for da in full_daily_adherence
+        if start_date.isoformat()[:10] <= da.date <= end_date.isoformat()[:10]
+    ]
+
+    # Get active medications count
+    active_meds = await db.medications.count_documents({"user_id": current_user["id"], "active": True})
     
     stats = ProgressStats(
         total_doses_scheduled=total_scheduled,
@@ -577,7 +587,7 @@ async def get_progress(
         doses_skipped=skipped,
         adherence_rate=round(adherence_rate, 2),
         current_streak=current_streak,
-        longest_streak=current_streak,  # TODO: Implement proper longest streak calculation
+        longest_streak=longest_streak,
         total_active_medications=active_meds
     )
     
@@ -586,7 +596,7 @@ async def get_progress(
         period_start=start_date,
         period_end=end_date,
         stats=stats,
-        daily_adherence=daily_adherence
+        daily_adherence=period_daily_adherence
     )
 
     return progress
@@ -625,15 +635,6 @@ async def generate_dose_logs(medication: MedicationSchedule):
             await db.dose_logs.insert_one(dose_dict)
 
 
-def calculate_streak(daily_adherence: List[DailyAdherence]) -> int:
-    """Calculate current streak of days with 100% adherence"""
-    streak = 0
-    for day in reversed(daily_adherence):
-        if day.rate == 100.0:
-            streak += 1
-        else:
-            break
-    return streak
 
 
 # Include the router in the main app
