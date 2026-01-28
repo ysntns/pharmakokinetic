@@ -23,9 +23,7 @@ export default function DosesScreen() {
       setLoading(true);
       const doses = await doseAPI.getAll();
       const today = doses.filter((dose) => isToday(parseISO(dose.scheduled_time)));
-      today.sort((a, b) => 
-        new Date(a.scheduled_time).getTime() - new Date(b.scheduled_time).getTime()
-      );
+      today.sort((a, b) => a.scheduled_time.localeCompare(b.scheduled_time));
       setTodaysDoses(today);
     } catch (error) {
       console.error('Dozlar yüklenirken hata:', error);
