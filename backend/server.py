@@ -534,9 +534,18 @@ async def get_progress(
     
     # Calculate statistics
     total_scheduled = len(doses)
-    taken = len([d for d in doses if d.get("status") == DoseStatus.TAKEN])
-    missed = len([d for d in doses if d.get("status") == DoseStatus.MISSED])
-    skipped = len([d for d in doses if d.get("status") == DoseStatus.SKIPPED])
+    taken = 0
+    missed = 0
+    skipped = 0
+
+    for d in doses:
+        status = d.get("status")
+        if status == DoseStatus.TAKEN:
+            taken += 1
+        elif status == DoseStatus.MISSED:
+            missed += 1
+        elif status == DoseStatus.SKIPPED:
+            skipped += 1
     
     adherence_rate = (taken / total_scheduled * 100) if total_scheduled > 0 else 0
 
