@@ -3,7 +3,8 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
+  FlatList,
+  ListRenderItem,
   TouchableOpacity,
   ActivityIndicator,
   Platform,
@@ -60,6 +61,67 @@ export default function DosesScreen() {
     }
   };
 
+  const renderItem: ListRenderItem<DoseLog> = ({ item: dose }) => {
+    const statusInfo = getDoseStatusInfo(dose.status);
+
+    return (
+      <View style={styles.doseCard}>
+        <View style={styles.doseHeader}>
+          <Text style={styles.timeText}>
+            {format(parseISO(dose.scheduled_time), 'HH:mm')}
+          </Text>
+          <View style={[styles.statusBadge, { backgroundColor: statusInfo.bgColor }]}>
+            <Ionicons name={statusInfo.icon} size={14} color={statusInfo.color} />
+            <Text style={[styles.statusText, { color: statusInfo.color }]}>
+              {statusInfo.label}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.doseBody}>
+          <View style={styles.drugIcon}>
+            <Ionicons name="medical" size={28} color="#0EA5E9" />
+          </View>
+          <View style={styles.drugInfo}>
+            <Text style={styles.drugName}>{dose.drug_name}</Text>
+            <Text style={styles.dosage}>{dose.dosage}</Text>
+            {dose.notes && (
+              <Text style={styles.notes}>{dose.notes}</Text>
+            )}
+          </View>
+        </View>
+
+        {dose.status === 'scheduled' && (
+          <View style={styles.actions}>
+            <TouchableOpacity
+              style={styles.takeButton}
+              onPress={() => handleMarkTaken(dose.id)}
+            >
+              <Ionicons name="checkmark" size={20} color="#FFFFFF" />
+              <Text style={styles.takeButtonText}>Aldım</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.skipButton}>
+              <Ionicons name="close" size={20} color="#64748B" />
+              <Text style={styles.skipButtonText}>Atla</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+    );
+  };
+
+  const renderEmptyComponent = () => (
+    <View style={styles.emptyState}>
+      <Ionicons name="calendar-outline" size={64} color="#94A3B8" />
+      <Text style={styles.emptyTitle}>Bugün doz yok</Text>
+      <Text style={styles.emptyText}>
+        Bugün için planlanmış bir doz bulunmuyor
+      </Text>
+    </View>
+  );
+
+  const renderFooterComponent = () => <View style={{ height: 100 }} />;
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -78,71 +140,16 @@ export default function DosesScreen() {
         </View>
       </View>
 
-      <ScrollView
+      <FlatList
         style={styles.scrollView}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
-      >
-        {todaysDoses.length > 0 ? (
-          todaysDoses.map((dose) => {
-            const statusInfo = getDoseStatusInfo(dose.status);
-            
-            return (
-              <View key={dose.id} style={styles.doseCard}>
-                <View style={styles.doseHeader}>
-                  <Text style={styles.timeText}>
-                    {format(parseISO(dose.scheduled_time), 'HH:mm')}
-                  </Text>
-                  <View style={[styles.statusBadge, { backgroundColor: statusInfo.bgColor }]}>
-                    <Ionicons name={statusInfo.icon} size={14} color={statusInfo.color} />
-                    <Text style={[styles.statusText, { color: statusInfo.color }]}>
-                      {statusInfo.label}
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.doseBody}>
-                  <View style={styles.drugIcon}>
-                    <Ionicons name="medical" size={28} color="#0EA5E9" />
-                  </View>
-                  <View style={styles.drugInfo}>
-                    <Text style={styles.drugName}>{dose.drug_name}</Text>
-                    <Text style={styles.dosage}>{dose.dosage}</Text>
-                    {dose.notes && (
-                      <Text style={styles.notes}>{dose.notes}</Text>
-                    )}
-                  </View>
-                </View>
-
-                {dose.status === 'scheduled' && (
-                  <View style={styles.actions}>
-                    <TouchableOpacity
-                      style={styles.takeButton}
-                      onPress={() => handleMarkTaken(dose.id)}
-                    >
-                      <Ionicons name="checkmark" size={20} color="#FFFFFF" />
-                      <Text style={styles.takeButtonText}>Aldım</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.skipButton}>
-                      <Ionicons name="close" size={20} color="#64748B" />
-                      <Text style={styles.skipButtonText}>Atla</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-              </View>
-            );
-          })
-        ) : (
-          <View style={styles.emptyState}>
-            <Ionicons name="calendar-outline" size={64} color="#94A3B8" />
-            <Text style={styles.emptyTitle}>Bugün doz yok</Text>
-            <Text style={styles.emptyText}>
-              Bugün için planlanmış bir doz bulunmuyor
-            </Text>
-          </View>
-        )}
-        <View style={{ height: 100 }} />
-      </ScrollView>
+        data={todaysDoses}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        ListEmptyComponent={renderEmptyComponent}
+        ListFooterComponent={renderFooterComponent}
+      />
     </View>
   );
 }
