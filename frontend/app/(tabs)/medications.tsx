@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -47,10 +47,13 @@ export default function MedicationsScreen() {
     loadData();
   };
 
-  const filteredDrugs = drugs.filter(drug =>
-    drug.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    drug.active_ingredient.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredDrugs = useMemo(() => {
+    const lowerCaseQuery = searchQuery.toLowerCase();
+    return drugs.filter((drug) =>
+      drug.name.toLowerCase().includes(lowerCaseQuery) ||
+      drug.active_ingredient.toLowerCase().includes(lowerCaseQuery)
+    );
+  }, [drugs, searchQuery]);
 
   if (loading) {
     return (
