@@ -6,12 +6,13 @@ Tests all CRUD operations for drugs, medications, dose logs, and progress tracki
 
 import requests
 import json
+import os
 from datetime import datetime, timedelta
 from typing import Dict, Any, List
 import sys
 
 # Base URL from frontend environment
-BASE_URL = "https://pharmacokinetic-mvp.preview.emergentagent.com/api"
+BASE_URL = os.environ.get("BASE_URL", "https://pharmacokinetic-mvp.preview.emergentagent.com/api")
 
 class PharmacoKineticAPITester:
     def __init__(self):
