@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -24,6 +24,10 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const { medications, setMedications, logout, user } = useAppStore();
+
+  const takenCount = useMemo(() => {
+    return todaysDoses.filter((d) => d.status === 'taken').length;
+  }, [todaysDoses]);
 
   const handleLogout = () => {
     Alert.alert(
@@ -152,7 +156,7 @@ export default function HomeScreen() {
           <View style={[styles.statCard, { backgroundColor: '#D1FAE5' }]}>
             <Ionicons name="checkmark-circle" size={24} color="#10B981" />
             <Text style={styles.statNumber}>
-              {todaysDoses.filter((d) => d.status === 'taken').length}
+              {takenCount}
             </Text>
             <Text style={styles.statLabel}>Alındı</Text>
           </View>
