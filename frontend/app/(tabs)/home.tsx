@@ -14,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { medicationAPI, doseAPI, authAPI } from '../../services/api';
 import { useAppStore, DoseLog } from '../../store/appStore';
-import { format, isToday, parseISO } from 'date-fns';
+import { format, parseISO, startOfDay, endOfDay } from 'date-fns';
 import { tr } from 'date-fns/locale';
 
 export default function HomeScreen() {
@@ -47,17 +47,22 @@ export default function HomeScreen() {
   const loadData = async () => {
     try {
       setLoading(true);
+
+      const todayStart = startOfDay(new Date()).toISOString();
+      const todayEnd = endOfDay(new Date()).toISOString();
+
       const [meds, doses] = await Promise.all([
         medicationAPI.getAll(true),
-        doseAPI.getAll(),
+        doseAPI.getAll({
+          start_date: todayStart,
+          end_date: todayEnd
+        }),
       ]);
       
       setMedications(meds);
       
-      const today = doses.filter((dose) => {
-        const doseDate = parseISO(dose.scheduled_time);
-        return isToday(doseDate);
-      });
+      // Doses are already filtered by the API, but we keep sort
+      const today = doses;
       
       today.sort((a, b) => 
         new Date(a.scheduled_time).getTime() - new Date(b.scheduled_time).getTime()

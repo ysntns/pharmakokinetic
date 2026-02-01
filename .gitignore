@@ -65,3 +65,7 @@ Pods/
 # Database
 *.db
 *.sqlite
+
+# Metro
+.metro-cache/
+frontend/.metro-cache/

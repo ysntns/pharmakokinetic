@@ -154,9 +154,31 @@ export const mockMedicationAPI = {
 
 // Mock Dose API
 export const mockDoseAPI = {
-  getAll: async (filters?: any): Promise<DoseLog[]> => {
+  getAll: async (filters?: {
+    medication_id?: string;
+    status?: string;
+    start_date?: string;
+    end_date?: string;
+  }): Promise<DoseLog[]> => {
     await delay();
-    return [...MOCK_DOSES];
+    let doses = [...MOCK_DOSES];
+
+    if (filters) {
+      if (filters.medication_id) {
+        doses = doses.filter(d => d.medication_id === filters.medication_id);
+      }
+      if (filters.status) {
+        doses = doses.filter(d => d.status === filters.status);
+      }
+      if (filters.start_date) {
+        doses = doses.filter(d => d.scheduled_time >= filters.start_date!);
+      }
+      if (filters.end_date) {
+        doses = doses.filter(d => d.scheduled_time <= filters.end_date!);
+      }
+    }
+
+    return doses;
   },
 
   getById: async (id: string): Promise<DoseLog> => {
