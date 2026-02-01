@@ -21,6 +21,7 @@ from auth import (
     get_password_hash, verify_password, create_access_token,
     get_current_user, get_current_active_user, security
 )
+from streak_utils import calculate_longest_streak_from_logs
 
 
 ROOT_DIR = Path(__file__).parent
@@ -569,6 +570,7 @@ async def get_progress(
     
     # Calculate streak
     current_streak = calculate_streak(daily_adherence)
+    longest_streak = await get_all_time_longest_streak(current_user["id"])
     
     stats = ProgressStats(
         total_doses_scheduled=total_scheduled,
@@ -577,7 +579,7 @@ async def get_progress(
         doses_skipped=skipped,
         adherence_rate=round(adherence_rate, 2),
         current_streak=current_streak,
-        longest_streak=current_streak,  # TODO: Implement proper longest streak calculation
+        longest_streak=longest_streak,
         total_active_medications=active_meds
     )
     
@@ -593,6 +595,18 @@ async def get_progress(
 
 
 # ============ HELPER FUNCTIONS ============
+
+async def get_all_time_longest_streak(user_id: str) -> int:
+    """Fetch all dose logs and calculate longest streak"""
+    # Fetch only necessary fields to minimize data transfer
+    # status is stored as string in DB (e.g. "taken", "missed")
+    logs = await db.dose_logs.find(
+        {"user_id": user_id},
+        {"scheduled_time": 1, "status": 1}
+    ).to_list(length=None)
+
+    return calculate_longest_streak_from_logs(logs)
+
 
 async def generate_dose_logs(medication: MedicationSchedule):
     """Generate dose logs for a medication schedule"""
