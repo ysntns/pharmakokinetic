@@ -19,7 +19,7 @@ from models import (
 )
 from auth import (
     get_password_hash, verify_password, create_access_token,
-    get_current_user, get_current_active_user, security
+    get_current_user, security
 )
 
 
@@ -523,49 +523,99 @@ async def get_progress(
     end_date = datetime.utcnow()
     start_date = end_date - timedelta(days=days)
 
-    # Get all dose logs in the period
-    doses = await db.dose_logs.find({
-        "user_id": current_user["id"],
-        "scheduled_time": {
-            "$gte": start_date.isoformat(),
-            "$lte": end_date.isoformat()
+    # Aggregation pipeline to calculate statistics and daily adherence
+    pipeline = [
+        {
+            "$match": {
+                "user_id": current_user["id"],
+                "scheduled_time": {
+                    "$gte": start_date.isoformat(),
+                    "$lte": end_date.isoformat()
+                }
+            }
+        },
+        {
+            "$facet": {
+                "stats": [
+                    {
+                        "$group": {
+                            "_id": None,
+                            "total": {"$sum": 1},
+                            "taken": {
+                                "$sum": {"$cond": [{"$eq": ["$status", DoseStatus.TAKEN.value]}, 1, 0]}
+                            },
+                            "missed": {
+                                "$sum": {"$cond": [{"$eq": ["$status", DoseStatus.MISSED.value]}, 1, 0]}
+                            },
+                            "skipped": {
+                                "$sum": {"$cond": [{"$eq": ["$status", DoseStatus.SKIPPED.value]}, 1, 0]}
+                            }
+                        }
+                    }
+                ],
+                "daily": [
+                    {
+                        "$project": {
+                            "date": {"$substr": ["$scheduled_time", 0, 10]},
+                            "status": 1
+                        }
+                    },
+                    {
+                        "$group": {
+                            "_id": "$date",
+                            "scheduled": {"$sum": 1},
+                            "taken": {
+                                "$sum": {"$cond": [{"$eq": ["$status", DoseStatus.TAKEN.value]}, 1, 0]}
+                            },
+                            "missed": {
+                                "$sum": {"$cond": [{"$eq": ["$status", DoseStatus.MISSED.value]}, 1, 0]}
+                            }
+                        }
+                    },
+                    {"$sort": {"_id": 1}}
+                ]
+            }
         }
-    }).to_list(10000)
+    ]
+
+    result = await db.dose_logs.aggregate(pipeline).to_list(1)
     
-    # Calculate statistics
-    total_scheduled = len(doses)
-    taken = len([d for d in doses if d.get("status") == DoseStatus.TAKEN])
-    missed = len([d for d in doses if d.get("status") == DoseStatus.MISSED])
-    skipped = len([d for d in doses if d.get("status") == DoseStatus.SKIPPED])
-    
+    total_scheduled = 0
+    taken = 0
+    missed = 0
+    skipped = 0
+    daily_adherence = []
+
+    if result:
+        data = result[0]
+
+        # Process overall stats
+        if data.get("stats"):
+            stats_doc = data["stats"][0]
+            total_scheduled = stats_doc.get("total", 0)
+            taken = stats_doc.get("taken", 0)
+            missed = stats_doc.get("missed", 0)
+            skipped = stats_doc.get("skipped", 0)
+
+        # Process daily stats
+        for day in data.get("daily", []):
+            scheduled = day.get("scheduled", 0)
+            day_taken = day.get("taken", 0)
+            day_missed = day.get("missed", 0)
+            rate = (day_taken / scheduled * 100) if scheduled > 0 else 0
+
+            daily_adherence.append(DailyAdherence(
+                date=day["_id"],
+                scheduled=scheduled,
+                taken=day_taken,
+                missed=day_missed,
+                rate=rate
+            ))
+
     adherence_rate = (taken / total_scheduled * 100) if total_scheduled > 0 else 0
 
     # Get active medications count
     active_meds = await db.medications.count_documents({"user_id": current_user["id"], "active": True})
-    
-    # Calculate daily adherence
-    daily_stats = {}
-    for dose in doses:
-        date_str = dose.get("scheduled_time", "")[:10]  # YYYY-MM-DD
-        if date_str not in daily_stats:
-            daily_stats[date_str] = {"scheduled": 0, "taken": 0, "missed": 0}
-        
-        daily_stats[date_str]["scheduled"] += 1
-        if dose.get("status") == DoseStatus.TAKEN:
-            daily_stats[date_str]["taken"] += 1
-        elif dose.get("status") == DoseStatus.MISSED:
-            daily_stats[date_str]["missed"] += 1
-    
-    daily_adherence = [
-        DailyAdherence(
-            date=date,
-            scheduled=stats["scheduled"],
-            taken=stats["taken"],
-            missed=stats["missed"],
-            rate=(stats["taken"] / stats["scheduled"] * 100) if stats["scheduled"] > 0 else 0
-        )
-        for date, stats in sorted(daily_stats.items())
-    ]
     
     # Calculate streak
     current_streak = calculate_streak(daily_adherence)
@@ -653,10 +703,6 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
-
-@app.on_event("shutdown")
-async def shutdown_db_client():
-    client.close()
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
