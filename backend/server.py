@@ -184,10 +184,10 @@ async def analyze_drug_image(
         if not api_key:
             raise HTTPException(status_code=500, detail="AI API key not configured")
 
-        client = anthropic.Anthropic(api_key=api_key)
+        client = anthropic.AsyncAnthropic(api_key=api_key)
 
         # Analyze image with Claude
-        message = client.messages.create(
+        message = await client.messages.create(
             model="claude-3-5-sonnet-20241022",
             max_tokens=1024,
             messages=[
