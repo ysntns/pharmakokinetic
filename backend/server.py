@@ -284,7 +284,7 @@ async def get_drugs(search: Optional[str] = None, category: Optional[str] = None
         query["category"] = category
     
     drugs = await db.drugs.find(query).to_list(1000)
-    return [Drug(**drug) for drug in drugs]
+    return drugs
 
 
 @api_router.get("/drugs/{drug_id}", response_model=Drug)
