@@ -600,6 +600,8 @@ async def generate_dose_logs(medication: MedicationSchedule):
     days_to_generate = 7
     start_date = medication.start_date
     
+    dose_logs_to_insert = []
+
     for day in range(days_to_generate):
         current_date = start_date + timedelta(days=day)
         
@@ -622,7 +624,10 @@ async def generate_dose_logs(medication: MedicationSchedule):
             dose_dict["created_at"] = dose_log.created_at.isoformat()
             dose_dict["updated_at"] = dose_log.updated_at.isoformat()
             
-            await db.dose_logs.insert_one(dose_dict)
+            dose_logs_to_insert.append(dose_dict)
+
+    if dose_logs_to_insert:
+        await db.dose_logs.insert_many(dose_logs_to_insert)
 
 
 def calculate_streak(daily_adherence: List[DailyAdherence]) -> int:
