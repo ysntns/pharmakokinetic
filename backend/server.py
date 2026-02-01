@@ -7,6 +7,7 @@ import logging
 from pathlib import Path
 from typing import List, Optional
 from datetime import datetime, timedelta
+from collections import Counter
 import base64
 import anthropic
 from models import (
@@ -534,9 +535,10 @@ async def get_progress(
     
     # Calculate statistics
     total_scheduled = len(doses)
-    taken = len([d for d in doses if d.get("status") == DoseStatus.TAKEN])
-    missed = len([d for d in doses if d.get("status") == DoseStatus.MISSED])
-    skipped = len([d for d in doses if d.get("status") == DoseStatus.SKIPPED])
+    counts = Counter(d.get("status") for d in doses)
+    taken = counts[DoseStatus.TAKEN]
+    missed = counts[DoseStatus.MISSED]
+    skipped = counts[DoseStatus.SKIPPED]
     
     adherence_rate = (taken / total_scheduled * 100) if total_scheduled > 0 else 0
 
