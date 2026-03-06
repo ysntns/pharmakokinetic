@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { BarCodeScanner } from 'expo-barcode-scanner';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { drugAPI, ocrAPI } from '../services/api';
 
@@ -25,19 +25,13 @@ export default function AddDrugModal({ visible, onClose, onSuccess }: AddDrugMod
   const [method, setMethod] = useState<'manual' | 'barcode' | 'photo' | null>(null);
   const [scanning, setScanning] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [permission, requestPermission] = useCameraPermissions();
 
   // Form fields
   const [drugName, setDrugName] = useState('');
   const [activeIngredient, setActiveIngredient] = useState('');
   const [description, setDescription] = useState('');
   const [dosages, setDosages] = useState('');
-  
-  const requestCameraPermission = async () => {
-    const { status } = await BarCodeScanner.requestPermissionsAsync();
-    setHasPermission(status === 'granted');
-    return status === 'granted';
-  };
 
   const handleBarcodeScanned = async ({ data }: { data: string }) => {
     setScanning(false);
@@ -46,8 +40,6 @@ export default function AddDrugModal({ visible, onClose, onSuccess }: AddDrugMod
       `Barkod: ${data}\n\nİlaç bilgileri yükleniyor...`,
       [{ text: 'Tamam' }]
     );
-    // Burada API'den ilaç bilgisi çekilebilir
-    // Şimdilik manuel forma geç
     setMethod('manual');
   };
 
@@ -57,7 +49,6 @@ export default function AddDrugModal({ visible, onClose, onSuccess }: AddDrugMod
       const result = await ocrAPI.analyzeDrugImage(imageUri);
 
       if (result.success && result.data) {
-        // Fill form with extracted data
         setDrugName(result.data.name || '');
         setActiveIngredient(result.data.active_ingredient || '');
         setDescription(result.data.description || '');
@@ -96,7 +87,7 @@ export default function AddDrugModal({ visible, onClose, onSuccess }: AddDrugMod
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsEditing: true,
       quality: 0.8,
     });
@@ -194,12 +185,14 @@ export default function AddDrugModal({ visible, onClose, onSuccess }: AddDrugMod
             <TouchableOpacity
               style={styles.methodCard}
               onPress={async () => {
-                const granted = await requestCameraPermission();
-                if (granted) {
-                  setScanning(true);
-                } else {
-                  Alert.alert('İzin Gerekli', 'Kamera kullanmak için izin vermelisiniz');
+                if (!permission?.granted) {
+                  const result = await requestPermission();
+                  if (!result.granted) {
+                    Alert.alert('İzin Gerekli', 'Kamera kullanmak için izin vermelisiniz');
+                    return;
+                  }
                 }
+                setScanning(true);
               }}
             >
               <View style={[styles.methodIcon, { backgroundColor: '#FEF3C7' }]}>
@@ -238,9 +231,12 @@ export default function AddDrugModal({ visible, onClose, onSuccess }: AddDrugMod
 
         {scanning && (
           <View style={styles.scannerContainer}>
-            <BarCodeScanner
-              onBarCodeScanned={handleBarcodeScanned}
+            <CameraView
               style={StyleSheet.absoluteFillObject}
+              barcodeScannerSettings={{
+                barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128', 'code39'],
+              }}
+              onBarcodeScanned={handleBarcodeScanned}
             />
             <View style={styles.scannerOverlay}>
               <Text style={styles.scannerText}>Barkodu kameranın önüne tutun</Text>

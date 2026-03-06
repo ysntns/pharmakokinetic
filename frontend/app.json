@@ -27,7 +27,13 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Medilog ilaç kutusu tarama ve barkod okuma için kameraya erişim istiyor."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
