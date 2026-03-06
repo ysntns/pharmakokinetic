@@ -10,8 +10,8 @@ import {
   mockOcrAPI,
 } from './mockApi';
 
-// Use mock API for demo mode (set to false when backend is available)
-const USE_MOCK_API = true; // Set to true for APK demo without backend
+// Set via EXPO_PUBLIC_USE_MOCK_API=true for demo mode without backend
+const USE_MOCK_API = process.env.EXPO_PUBLIC_USE_MOCK_API === 'true';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
 const API_BASE = `${API_URL}/api`;
